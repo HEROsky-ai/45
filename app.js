@@ -9,6 +9,7 @@
 let sbClient       = null;   // Supabase client instance
 let allImages      = [];     // 全部圖片快取
 let currentTags    = [];     // 正在編輯的標籤
+let currentEditTags = [];    // 正在編輯已有圖片的標籤
 let selectedFile   = null;   // 已選擇的圖片 File
 let lightboxImage  = null;   // 目前 lightbox 顯示的圖片物件
 let ocrCollapsed   = false;  // OCR 文字是否收合
@@ -347,6 +348,12 @@ function updateStats(shown, total, query) {
 // ─── Lightbox ────────────────────────────────────────────────
 function openLightbox(img) {
   lightboxImage = img;
+  currentEditTags = [...(img.symptoms || [])];
+
+  // 預設切換回檢視模式
+  $('lightboxViewMode').style.display = 'block';
+  $('lightboxEditMode').style.display = 'none';
+
   $('lightboxImg').src = img.image_url;
   $('lightboxImg').alt = img.title || '症狀圖片';
   $('lightboxTitle').textContent = img.title || '未命名';
@@ -369,6 +376,109 @@ function closeLightbox() {
   $('lightbox').style.display = 'none';
   document.body.style.overflow = '';
   lightboxImage = null;
+  currentEditTags = [];
+}
+
+function openEditMode() {
+  if (!lightboxImage) return;
+
+  $('lightboxViewMode').style.display = 'none';
+  $('lightboxEditMode').style.display = 'block';
+
+  $('editTitleInput').value = lightboxImage.title || '';
+  renderEditTags();
+}
+
+function closeEditMode() {
+  $('lightboxViewMode').style.display = 'block';
+  $('lightboxEditMode').style.display = 'none';
+  currentEditTags = [...(lightboxImage.symptoms || [])];
+}
+
+function renderEditTags() {
+  const container = $('editTagsContainer');
+  container.innerHTML = '';
+  currentEditTags.forEach((tag, i) => {
+    const chip = document.createElement('span');
+    chip.className = 'tag-editable';
+    chip.innerHTML = `${escHtml(tag)}<button class="tag-remove-edit" data-idx="${i}" title="移除標籤">✕</button>`;
+    container.appendChild(chip);
+  });
+
+  container.querySelectorAll('.tag-remove-edit').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const idx = parseInt(e.target.dataset.idx);
+      currentEditTags.splice(idx, 1);
+      renderEditTags();
+    });
+  });
+}
+
+function addEditTag(tagText) {
+  const tag = tagText.trim();
+  if (!tag) return;
+  if (currentEditTags.some(t => t.toLowerCase() === tag.toLowerCase())) {
+    showToast('標籤已存在', 'error');
+    return;
+  }
+  currentEditTags.push(tag);
+  renderEditTags();
+  $('editTagInput').value = '';
+  $('editTagInput').focus();
+}
+
+async function saveEditImage() {
+  if (!lightboxImage) return;
+
+  const newTitle = $('editTitleInput').value.trim() || '未命名';
+
+  $('editSaveBtn').disabled = true;
+  $('editSaveBtnText').textContent = '儲存中…';
+  $('editSaveSpinner').style.display = 'block';
+
+  try {
+    const { data, error } = await sbClient
+      .from(TABLE)
+      .update({
+        title: newTitle,
+        symptoms: currentEditTags
+      })
+      .eq('id', lightboxImage.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // 更新本地快取
+    const index = allImages.findIndex(img => img.id === lightboxImage.id);
+    if (index !== -1) {
+      allImages[index] = data;
+    }
+
+    // 重新更新 Lightbox 的內容
+    lightboxImage = data;
+    $('lightboxTitle').textContent = data.title || '未命名';
+    $('lightboxTags').innerHTML = currentEditTags.map(t =>
+      `<span class="tag-chip">${escHtml(t)}</span>`
+    ).join('') || '<span style="color:var(--text-3);font-size:13px">尚無症狀標籤</span>';
+
+    // 重新渲染主畫面的 Gallery 和標籤雲
+    const query = $('searchInput').value.trim();
+    renderGallery(filterImages(allImages, query), query);
+    renderTagCloud(allImages);
+    updateStats(filterImages(allImages, query).length, allImages.length, query);
+
+    showToast('✅ 資料已成功更新！', 'success');
+    closeEditMode();
+
+  } catch (err) {
+    console.error('saveEditImage error:', err);
+    showToast('❌ 儲存失敗：' + (err.message || '未知錯誤'), 'error');
+  } finally {
+    $('editSaveBtn').disabled = false;
+    $('editSaveBtnText').textContent = '儲存';
+    $('editSaveSpinner').style.display = 'none';
+  }
 }
 
 // ─── Upload flow ─────────────────────────────────────────────
@@ -713,9 +823,28 @@ function setupEventListeners() {
   $('lightboxClose').addEventListener('click', closeLightbox);
   $('deleteBtn').addEventListener('click', deleteCurrentImage);
 
+  // ── Lightbox Edit Mode ──
+  $('editBtn').addEventListener('click', openEditMode);
+  $('editCancelBtn').addEventListener('click', closeEditMode);
+  $('editSaveBtn').addEventListener('click', saveEditImage);
+  $('editAddTagBtn').addEventListener('click', () => addEditTag($('editTagInput').value));
+  $('editTagInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addEditTag($('editTagInput').value);
+    }
+  });
+
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      if ($('lightbox').style.display !== 'none') closeLightbox();
+      if ($('lightbox').style.display !== 'none') {
+        // 如果在編輯模式下按 ESC，先退回唯讀檢視模式；若在檢視模式下則關閉 lightbox
+        if ($('lightboxEditMode').style.display !== 'none') {
+          closeEditMode();
+        } else {
+          closeLightbox();
+        }
+      }
       if ($('uploadModal').style.display !== 'none') closeUploadModal();
     }
   });

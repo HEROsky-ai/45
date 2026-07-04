@@ -188,14 +188,42 @@
         <img id="lightboxImg" src="" alt="" class="lightbox-img">
       </div>
       <div class="lightbox-info">
-        <h3 id="lightboxTitle" class="lightbox-title"></h3>
-        <div id="lightboxTags" class="tags-display" role="list"></div>
-        <details class="lightbox-ocr-details">
-          <summary>🔤 OCR 辨識內容</summary>
-          <div id="lightboxOcrText" class="lightbox-ocr-text"></div>
-        </details>
-        <div class="lightbox-meta" id="lightboxMeta"></div>
-        <button class="btn-danger" id="deleteBtn">🗑️ 刪除此圖片</button>
+        <!-- 檢視模式 -->
+        <div id="lightboxViewMode">
+          <h3 id="lightboxTitle" class="lightbox-title"></h3>
+          <div id="lightboxTags" class="tags-display" role="list"></div>
+          <details class="lightbox-ocr-details">
+            <summary>🔤 OCR 辨識內容</summary>
+            <div id="lightboxOcrText" class="lightbox-ocr-text"></div>
+          </details>
+          <div class="lightbox-meta" id="lightboxMeta"></div>
+          <button class="btn-secondary btn-full" id="editBtn" style="margin-top: 16px; margin-bottom: 0;">✏️ 編輯標題與標籤</button>
+          <button class="btn-danger" id="deleteBtn">🗑️ 刪除此圖片</button>
+        </div>
+
+        <!-- 編輯模式 -->
+        <div id="lightboxEditMode" style="display:none">
+          <h3 class="lightbox-title" style="margin-bottom: 16px;">✏️ 編輯內容</h3>
+          <div class="form-group">
+            <label for="editTitleInput">圖片標題</label>
+            <input type="text" id="editTitleInput" placeholder="圖片標題">
+          </div>
+          <div class="form-group">
+            <label>症狀標籤</label>
+            <div id="editTagsContainer" class="tags-editable" role="list" style="min-height: 80px;"></div>
+            <div class="tag-input-row">
+              <input type="text" id="editTagInput" placeholder="新增標籤">
+              <button class="btn-tag-add" id="editAddTagBtn" type="button">新增</button>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 20px;">
+            <button class="btn-secondary" id="editCancelBtn" style="flex: 1; padding: 10px 0; text-align: center;">取消</button>
+            <button class="btn-primary" id="editSaveBtn" style="flex: 1; padding: 10px 0; justify-content: center;">
+              <span id="editSaveBtnText">儲存</span>
+              <div class="spinner-small" id="editSaveSpinner" style="display:none"></div>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -203,6 +231,6 @@
   <!-- ===== TOAST ===== -->
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>
