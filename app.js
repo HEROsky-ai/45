@@ -40,11 +40,17 @@ document.addEventListener('DOMContentLoaded', () => {
     el.addEventListener('keydown', e => { if (e.key === 'Enter') saveConfig(); })
   );
 
-  // 使用 localStorage 已存的設定，若沒有則自動帶入預設值並儲存
-  const url = localStorage.getItem('sb_url') || DEFAULT_URL;
-  const key = localStorage.getItem('sb_key') || DEFAULT_KEY;
-  localStorage.setItem('sb_url', url);
-  localStorage.setItem('sb_key', key);
+  // 讀取並驗證 localStorage 中的設定
+  let url = localStorage.getItem('sb_url');
+  let key = localStorage.getItem('sb_key');
+
+  // 如果沒有設定，或者設定是空的、無效的，就強制重設為預設的自動綁定金鑰
+  if (!url || url.trim() === '' || url === 'undefined' || !key || key.trim() === '' || key === 'undefined') {
+    url = DEFAULT_URL;
+    key = DEFAULT_KEY;
+    localStorage.setItem('sb_url', url);
+    localStorage.setItem('sb_key', key);
+  }
 
   // 直接連線，不顯示設定視窗
   initSupabase(url, key);
