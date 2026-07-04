@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>症狀圖片資料庫</title>
+  <meta name="description" content="輸入症狀關鍵字，即可搜尋相對應的醫療圖片。支援 OCR 自動辨識圖片文字並標記症狀。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/opencc-js@1/dist/umd/full.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ===== SETUP MODAL ===== -->
+  <div id="setupModal" class="overlay" role="dialog" aria-modal="true" aria-labelledby="setupTitle">
+    <div class="modal setup-modal">
+      <div class="setup-logo">🔬</div>
+      <h2 id="setupTitle">初始設定</h2>
+      <p class="setup-desc">請輸入您的 Supabase 連線資訊<br>（設定後儲存在您的瀏覽器，下次不需再輸入）</p>
+      <div class="form-group">
+        <label for="sbUrlInput">Supabase Project URL</label>
+        <input type="text" id="sbUrlInput" placeholder="https://xxxxxxxxxxxx.supabase.co" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label for="sbKeyInput">Supabase Anon Key</label>
+        <input type="password" id="sbKeyInput" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." autocomplete="off">
+      </div>
+      <a href="SETUP.md" target="_blank" class="setup-help-link">📖 不知道如何取得？查看設定教學</a>
+      <button class="btn-primary btn-full" id="saveConfigBtn">開始使用</button>
+    </div>
+  </div>
+
+  <!-- ===== HEADER ===== -->
+  <header id="appHeader">
+    <div class="header-inner">
+      <div class="logo" id="logoBtn">
+        <span class="logo-icon">🔬</span>
+        <span class="logo-text">症狀圖庫</span>
+      </div>
+
+      <div class="search-wrapper">
+        <div class="search-box" id="searchBox">
+          <span class="search-icon">⌕</span>
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="輸入症狀關鍵字…例如：發燒、皮疹、腹痛"
+            autocomplete="off"
+            aria-label="症狀搜尋"
+          >
+          <button class="search-clear" id="searchClear" aria-label="清除搜尋">✕</button>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="icon-btn" id="settingsBtn" aria-label="設定" title="Supabase 設定">⚙</button>
+        <button class="btn-upload-header" id="uploadHeaderBtn" aria-label="上傳圖片">
+          <span>＋</span> 新增圖片
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== STATS / FILTER BAR ===== -->
+  <div class="subheader" id="subheader">
+    <div class="subheader-inner">
+      <span id="statsText" class="stats-text">載入中…</span>
+      <div class="tag-cloud" id="tagCloud"></div>
+    </div>
+  </div>
+
+  <!-- ===== MAIN GALLERY ===== -->
+  <main id="mainContent">
+    <!-- Loading skeleton -->
+    <div id="loadingState" class="loading-state">
+      <div class="skeleton-grid">
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+      </div>
+    </div>
+
+    <!-- Gallery grid -->
+    <div id="gallery" class="gallery-grid" role="list"></div>
+
+    <!-- Empty state -->
+    <div id="emptyState" class="empty-state" style="display:none">
+      <div class="empty-icon">🔍</div>
+      <h2>找不到符合的圖片</h2>
+      <p id="emptyMsg">尚未上傳任何圖片，點擊右下角「＋」開始新增</p>
+    </div>
+  </main>
+
+  <!-- ===== FAB ===== -->
+  <button class="fab" id="fab" aria-label="新增圖片" title="新增圖片">
+    <span class="fab-icon">＋</span>
+    <span class="fab-ripple"></span>
+  </button>
+
+  <!-- ===== UPLOAD MODAL ===== -->
+  <div id="uploadModal" class="overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="uploadTitle">
+    <div class="modal upload-modal">
+      <div class="modal-header">
+        <h2 id="uploadTitle">新增症狀圖片</h2>
+        <button class="modal-close" id="closeUploadBtn" aria-label="關閉">✕</button>
+      </div>
+
+      <!-- Drop zone -->
+      <div id="dropZone" class="drop-zone" role="button" tabindex="0" aria-label="拖曳或點擊上傳圖片">
+        <div class="drop-content">
+          <div class="drop-icon">📁</div>
+          <p class="drop-title">拖曳圖片到這裡</p>
+          <p class="drop-sub">或</p>
+          <button class="btn-secondary" id="selectFileBtn" type="button">選擇圖片</button>
+          <input type="file" id="fileInput" accept="image/*" hidden aria-hidden="true">
+          <p class="drop-formats">支援 JPG、PNG、WEBP、BMP、TIFF</p>
+        </div>
+      </div>
+
+      <!-- Preview + OCR -->
+      <div id="previewSection" class="preview-section" style="display:none">
+        <div class="preview-image-wrap">
+          <img id="previewImg" src="" alt="圖片預覽" class="preview-img">
+          <button class="btn-reselect" id="reselectBtn" type="button">重新選擇</button>
+        </div>
+
+        <!-- OCR Progress -->
+        <div id="ocrProgress" class="ocr-progress" style="display:none">
+          <div class="ocr-progress-header">
+            <div class="spinner-small"></div>
+            <span id="ocrProgressText">正在辨識圖片文字…</span>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar" id="progressBar" style="width:0%"></div>
+          </div>
+          <p class="ocr-note">首次使用需下載中文語言包（約 30 MB），請稍候</p>
+        </div>
+
+        <!-- OCR Result -->
+        <div id="ocrResultSection" class="ocr-result-section" style="display:none">
+          <div class="section-label">
+            <span>🔤 OCR 辨識文字</span>
+            <button class="btn-icon-sm" id="toggleOcrText" title="展開/收合">▼</button>
+          </div>
+          <div id="ocrTextBox" class="ocr-text-box"></div>
+        </div>
+
+        <!-- Title -->
+        <div class="form-group">
+          <label for="titleInput">圖片標題</label>
+          <input type="text" id="titleInput" placeholder="例如：右膝關節 X 光影像">
+        </div>
+
+        <!-- Tags -->
+        <div class="form-group">
+          <label>症狀標籤 <span class="label-hint">（來自 OCR，可自行增減）</span></label>
+          <div id="tagsContainer" class="tags-editable" role="list" aria-label="症狀標籤列表"></div>
+          <div class="tag-input-row">
+            <input type="text" id="tagInput" placeholder="手動新增標籤" id="tagInputField">
+            <button class="btn-tag-add" id="addTagBtn" type="button">新增</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="uploadFooter" class="modal-footer" style="display:none">
+        <button class="btn-secondary" id="cancelUploadBtn">取消</button>
+        <button class="btn-primary" id="saveBtn" disabled>
+          <span id="saveBtnText">儲存圖片</span>
+          <div class="spinner-small" id="saveSpinner" style="display:none"></div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== LIGHTBOX ===== -->
+  <div id="lightbox" class="lightbox" style="display:none" role="dialog" aria-modal="true" aria-label="圖片詳情">
+    <div class="lightbox-bg" id="lightboxBg"></div>
+    <div class="lightbox-content">
+      <button class="lightbox-close" id="lightboxClose" aria-label="關閉">✕</button>
+      <div class="lightbox-image-wrap">
+        <img id="lightboxImg" src="" alt="" class="lightbox-img">
+      </div>
+      <div class="lightbox-info">
+        <h3 id="lightboxTitle" class="lightbox-title"></h3>
+        <div id="lightboxTags" class="tags-display" role="list"></div>
+        <details class="lightbox-ocr-details">
+          <summary>🔤 OCR 辨識內容</summary>
+          <div id="lightboxOcrText" class="lightbox-ocr-text"></div>
+        </details>
+        <div class="lightbox-meta" id="lightboxMeta"></div>
+        <button class="btn-danger" id="deleteBtn">🗑️ 刪除此圖片</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TOAST ===== -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
