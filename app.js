@@ -53,7 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('sb_key', key);
   }
 
-  // 直接連線，不顯示設定視窗
+  // 直接連線，隱藏設定視窗並初始化
+  $('setupModal').style.display = 'none';
   initSupabase(url, key);
   setupEventListeners();
   loadImages();
