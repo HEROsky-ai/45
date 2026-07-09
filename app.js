@@ -347,7 +347,7 @@ function updateStats(shown, total, query) {
 }
 
 // ─── Lightbox ────────────────────────────────────────────────
-function openLightbox(img) {
+function openLightbox(img, pushState = true) {
   lightboxImage = img;
   currentEditTags = [...(img.symptoms || [])];
 
@@ -371,13 +371,21 @@ function openLightbox(img) {
 
   $('lightbox').style.display = 'flex';
   document.body.style.overflow = 'hidden';
+
+  if (pushState) {
+    window.history.pushState({ modal: 'lightbox' }, '');
+  }
 }
 
-function closeLightbox() {
+function closeLightbox(popState = true) {
   $('lightbox').style.display = 'none';
   document.body.style.overflow = '';
   lightboxImage = null;
   currentEditTags = [];
+
+  if (popState && window.history.state && window.history.state.modal === 'lightbox') {
+    window.history.back();
+  }
 }
 
 function openEditMode() {
@@ -483,17 +491,25 @@ async function saveEditImage() {
 }
 
 // ─── Upload flow ─────────────────────────────────────────────
-function openUploadModal() {
+function openUploadModal(pushState = true) {
   resetUploadModal();
   $('uploadModal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
+
+  if (pushState) {
+    window.history.pushState({ modal: 'upload' }, '');
+  }
 }
 
-function closeUploadModal() {
+function closeUploadModal(popState = true) {
   $('uploadModal').style.display = 'none';
   document.body.style.overflow = '';
   selectedFile = null;
   currentTags = [];
+
+  if (popState && window.history.state && window.history.state.modal === 'upload') {
+    window.history.back();
+  }
 }
 
 function resetUploadModal() {
@@ -820,9 +836,10 @@ function setupEventListeners() {
   });
 
   // ── Lightbox ──
-  $('lightboxBg').addEventListener('click', closeLightbox);
-  $('lightboxClose').addEventListener('click', closeLightbox);
+  $('lightboxBg').addEventListener('click', () => closeLightbox());
+  $('lightboxClose').addEventListener('click', () => closeLightbox());
   $('deleteBtn').addEventListener('click', deleteCurrentImage);
+  $('lightboxBackBtn').addEventListener('click', () => closeLightbox());
 
   // ── Lightbox Edit Mode ──
   $('editBtn').addEventListener('click', openEditMode);
@@ -833,6 +850,16 @@ function setupEventListeners() {
     if (e.key === 'Enter') {
       e.preventDefault();
       addEditTag($('editTagInput').value);
+    }
+  });
+
+  // ── Browser History popstate (實作瀏覽器/手機返回鍵關閉視窗) ──
+  window.addEventListener('popstate', (e) => {
+    if ($('lightbox').style.display !== 'none') {
+      closeLightbox(false);
+    }
+    if ($('uploadModal').style.display !== 'none') {
+      closeUploadModal(false);
     }
   });
 
