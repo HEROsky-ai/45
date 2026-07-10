@@ -122,7 +122,7 @@ async function insertImage({ title, imageUrl, symptoms, ocrText, notes }) {
   const { data, error } = await sbClient
     .from(TABLE)
     .insert([{
-      title:    title || '未命名',
+      title:    title || '學員',
       image_url: imageUrl,
       symptoms:  symptoms,
       ocr_text:  ocrText,
@@ -364,7 +364,7 @@ function addEditTag(tagText) {
 async function saveEditImage() {
   if (!lightboxImage) return;
 
-  const newTitle = $('editTitleInput').value.trim() || '未命名';
+  const newTitle = $('editTitleInput').value.trim() || '學員';
   const newNotes = $('editNotesInput').value.trim() || '';
 
   $('editSaveBtn').disabled = true;
@@ -393,7 +393,7 @@ async function saveEditImage() {
 
     // 重新更新 Lightbox 的內容
     lightboxImage = data;
-    $('lightboxTitle').textContent = data.title || '未命名';
+    $('lightboxTitle').textContent = data.title || '學員';
     $('lightboxTags').innerHTML = currentEditTags.map(t =>
       `<span class="tag-chip">${escHtml(t)}</span>`
     ).join('') || '<span style="color:var(--text-3);font-size:13px">尚無症狀標籤</span>';
@@ -473,9 +473,8 @@ async function handleFileSelected(file) {
   $('previewSection').style.display = 'block';
   $('uploadFooter').style.display = 'flex';
 
-  // Auto-fill title from filename
-  const nameWithoutExt = file.name.replace(/\.[^.]+$/, '');
-  $('titleInput').value = nameWithoutExt;
+  // 預設填入名稱「學員」
+  $('titleInput').value = '學員';
 
   // 初始化空白標籤列表以供手動新增
   currentTags = [];
@@ -519,7 +518,7 @@ function addTag(tagText) {
 async function saveImage() {
   if (!selectedFile) return;
 
-  const title = $('titleInput').value.trim() || '未命名';
+  const title = $('titleInput').value.trim() || '學員';
   const ocrText = ''; // 移除 OCR 功能，直接帶入空值
   const notes = $('notesInput').value.trim() || '';
 
