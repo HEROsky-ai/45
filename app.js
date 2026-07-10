@@ -82,6 +82,7 @@ async function loadImages(query = '') {
     const filtered = query ? filterImages(allImages, query) : allImages;
     renderGallery(filtered, query);
     renderTagCloud(allImages);
+    updateTagSuggestions();
     updateStats(filtered.length, allImages.length, query);
 
   } catch (err) {
@@ -241,6 +242,26 @@ function renderTagCloud(images) {
       toggleSearchClear(tag);
     });
   });
+}
+
+function getAllUniqueTags() {
+  const tags = new Set();
+  allImages.forEach(img => {
+    (img.symptoms || []).forEach(t => {
+      if (t) tags.add(t.trim());
+    });
+  });
+  return Array.from(tags).sort();
+}
+
+function updateTagSuggestions() {
+  const uniqueTags = getAllUniqueTags();
+  const datalist = $('existingTags');
+  if (datalist) {
+    datalist.innerHTML = uniqueTags.map(tag =>
+      `<option value="${escHtml(tag)}">`
+    ).join('');
+  }
 }
 
 function updateStats(shown, total, query) {
@@ -403,6 +424,7 @@ async function saveEditImage() {
     const query = $('searchInput').value.trim();
     renderGallery(filterImages(allImages, query), query);
     renderTagCloud(allImages);
+    updateTagSuggestions();
     updateStats(filterImages(allImages, query).length, allImages.length, query);
 
     showToast('✅ 資料已成功更新！', 'success');
@@ -546,6 +568,7 @@ async function saveImage() {
     const query = $('searchInput').value.trim();
     renderGallery(filterImages(allImages, query), query);
     renderTagCloud(allImages);
+    updateTagSuggestions();
     updateStats(filterImages(allImages, query).length, allImages.length, query);
 
     showToast('✅ 圖片已成功儲存！', 'success');
@@ -573,6 +596,7 @@ async function deleteCurrentImage() {
     const query = $('searchInput').value.trim();
     renderGallery(filterImages(allImages, query), query);
     renderTagCloud(allImages);
+    updateTagSuggestions();
     updateStats(filterImages(allImages, query).length, allImages.length, query);
 
     closeLightbox();

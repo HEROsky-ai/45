@@ -140,7 +140,7 @@
           <label>症狀標籤 <span class="label-hint">（可自行增減）</span></label>
           <div id="tagsContainer" class="tags-editable" role="list" aria-label="症狀標籤列表"></div>
           <div class="tag-input-row">
-            <input type="text" id="tagInput" placeholder="手動新增標籤" id="tagInputField">
+            <input type="text" id="tagInput" placeholder="手動新增標籤" list="existingTags">
             <button class="btn-tag-add" id="addTagBtn" type="button">新增</button>
           </div>
         </div>
@@ -196,7 +196,7 @@
             <label>症狀標籤</label>
             <div id="editTagsContainer" class="tags-editable" role="list" style="min-height: 80px;"></div>
             <div class="tag-input-row">
-              <input type="text" id="editTagInput" placeholder="新增標籤">
+              <input type="text" id="editTagInput" placeholder="新增標籤" list="existingTags">
               <button class="btn-tag-add" id="editAddTagBtn" type="button">新增</button>
             </div>
           </div>
@@ -224,9 +224,12 @@
     </div>
   </div>
 
+  <!-- ===== SUGGESTED TAGS DATALIST ===== -->
+  <datalist id="existingTags"></datalist>
+
   <!-- ===== TOAST ===== -->
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script src="app.js?v=12"></script>
+  <script src="app.js?v=13"></script>
 </body>
 </html>
