@@ -585,7 +585,8 @@ body::after {
 }
 
 input[type="text"],
-input[type="password"] {
+input[type="password"],
+textarea {
   background: var(--glass);
   border: 1.5px solid var(--glass-border);
   border-radius: var(--radius-sm);
@@ -596,17 +597,48 @@ input[type="password"] {
   outline: none;
   transition: var(--transition);
   width: 100%;
+  resize: vertical;
 }
 
 input[type="text"]:focus,
-input[type="password"]:focus {
+input[type="password"]:focus,
+textarea:focus {
   border-color: var(--primary);
   background: rgba(129,140,248,0.05);
   box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
 input[type="text"]::placeholder,
-input[type="password"]::placeholder { color: var(--text-3); }
+input[type="password"]::placeholder,
+textarea::placeholder { color: var(--text-3); }
+
+/* Notes Display Box */
+.lightbox-notes-details {
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.lightbox-notes-details summary {
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  user-select: none;
+  background: var(--glass);
+  transition: var(--transition);
+}
+.lightbox-notes-details summary:hover { background: var(--glass-hover); }
+.lightbox-notes-text {
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--text-1);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 200px;
+  overflow-y: auto;
+}
 
 /* ===================================
    Buttons

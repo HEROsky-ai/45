@@ -167,6 +167,12 @@
             <button class="btn-tag-add" id="addTagBtn" type="button">新增</button>
           </div>
         </div>
+
+        <!-- Notes / Story -->
+        <div class="form-group">
+          <label for="notesInput">備註 / 故事說明</label>
+          <textarea id="notesInput" placeholder="例如：此病患為 55 歲男性，有糖尿病史，傷口復原較慢..." rows="3"></textarea>
+        </div>
       </div>
 
       <div id="uploadFooter" class="modal-footer" style="display:none">
@@ -192,6 +198,10 @@
         <div id="lightboxViewMode">
           <h3 id="lightboxTitle" class="lightbox-title"></h3>
           <div id="lightboxTags" class="tags-display" role="list"></div>
+          <details class="lightbox-notes-details" open style="margin-bottom: 12px;">
+            <summary>📝 備註 / 故事說明</summary>
+            <div id="lightboxNotes" class="lightbox-notes-text"></div>
+          </details>
           <details class="lightbox-ocr-details">
             <summary>🔤 OCR 辨識內容</summary>
             <div id="lightboxOcrText" class="lightbox-ocr-text"></div>
@@ -217,6 +227,10 @@
               <button class="btn-tag-add" id="editAddTagBtn" type="button">新增</button>
             </div>
           </div>
+          <div class="form-group">
+            <label for="editNotesInput">備註 / 故事說明</label>
+            <textarea id="editNotesInput" placeholder="輸入備註或案例故事說明..." rows="3"></textarea>
+          </div>
           <div style="display: flex; gap: 8px; margin-top: 20px;">
             <button class="btn-secondary" id="editCancelBtn" style="flex: 1; padding: 10px 0; text-align: center;">取消</button>
             <button class="btn-primary" id="editSaveBtn" style="flex: 1; padding: 10px 0; justify-content: center;">
@@ -240,6 +254,6 @@
   <!-- ===== TOAST ===== -->
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script src="app.js?v=6"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>

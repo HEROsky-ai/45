@@ -99,7 +99,8 @@ function filterImages(images, query) {
   return images.filter(img =>
     img.symptoms?.some(s => s.toLowerCase().includes(q)) ||
     img.ocr_text?.toLowerCase().includes(q) ||
-    img.title?.toLowerCase().includes(q)
+    img.title?.toLowerCase().includes(q) ||
+    img.notes?.toLowerCase().includes(q)
   );
 }
 
@@ -117,7 +118,7 @@ async function uploadToStorage(file) {
   return urlData.publicUrl;
 }
 
-async function insertImage({ title, imageUrl, symptoms, ocrText }) {
+async function insertImage({ title, imageUrl, symptoms, ocrText, notes }) {
   const { data, error } = await sbClient
     .from(TABLE)
     .insert([{
@@ -125,6 +126,7 @@ async function insertImage({ title, imageUrl, symptoms, ocrText }) {
       image_url: imageUrl,
       symptoms:  symptoms,
       ocr_text:  ocrText,
+      notes:     notes || '',
     }])
     .select()
     .single();
@@ -367,6 +369,7 @@ function openLightbox(img, pushState = true) {
     `<span class="tag-chip">${escHtml(t)}</span>`
   ).join('') || '<span style="color:var(--text-3);font-size:13px">尚無症狀標籤</span>';
 
+  $('lightboxNotes').textContent = img.notes || '（無備註說明）';
   $('lightboxOcrText').textContent = img.ocr_text || '（無 OCR 辨識內容）';
 
   $('lightbox').style.display = 'flex';
@@ -415,6 +418,7 @@ function openEditMode() {
   $('lightboxEditMode').style.display = 'block';
 
   $('editTitleInput').value = lightboxImage.title || '';
+  $('editNotesInput').value = lightboxImage.notes || '';
   renderEditTags();
 }
 
@@ -460,6 +464,7 @@ async function saveEditImage() {
   if (!lightboxImage) return;
 
   const newTitle = $('editTitleInput').value.trim() || '未命名';
+  const newNotes = $('editNotesInput').value.trim() || '';
 
   $('editSaveBtn').disabled = true;
   $('editSaveBtnText').textContent = '儲存中…';
@@ -470,7 +475,8 @@ async function saveEditImage() {
       .from(TABLE)
       .update({
         title: newTitle,
-        symptoms: currentEditTags
+        symptoms: currentEditTags,
+        notes: newNotes
       })
       .eq('id', lightboxImage.id)
       .select()
@@ -490,6 +496,7 @@ async function saveEditImage() {
     $('lightboxTags').innerHTML = currentEditTags.map(t =>
       `<span class="tag-chip">${escHtml(t)}</span>`
     ).join('') || '<span style="color:var(--text-3);font-size:13px">尚無症狀標籤</span>';
+    $('lightboxNotes').textContent = data.notes || '（無備註說明）';
 
     // 重新渲染主畫面的 Gallery 和標籤雲
     const query = $('searchInput').value.trim();
@@ -543,6 +550,7 @@ function resetUploadModal() {
   $('tagsContainer').innerHTML = '';
   $('titleInput').value = '';
   $('tagInput').value = '';
+  $('notesInput').value = '';
   $('saveBtn').disabled = true;
   $('saveBtnText').textContent = '儲存圖片';
   $('saveSpinner').style.display = 'none';
@@ -623,6 +631,7 @@ async function saveImage() {
 
   const title = $('titleInput').value.trim() || '未命名';
   const ocrText = $('ocrTextBox').textContent || '';
+  const notes = $('notesInput').value.trim() || '';
 
   $('saveBtn').disabled = true;
   $('saveBtnText').textContent = '上傳中…';
@@ -640,6 +649,7 @@ async function saveImage() {
       imageUrl,
       symptoms: currentTags,
       ocrText,
+      notes,
     });
 
     // 3. Update local state
