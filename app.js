@@ -768,6 +768,24 @@ function setupEventListeners() {
     }
   });
 
+  const handleAutocompleteSelect = (inputEl, addFn) => {
+    inputEl.addEventListener('input', (e) => {
+      const val = inputEl.value.trim();
+      if (!val) return;
+      
+      const typingTypes = ['insertText', 'insertCompositionText', 'deleteContentBackward', 'deleteContentForward'];
+      // 當使用者從下拉選單點選標籤時，觸發自動新增功能
+      if (!typingTypes.includes(e.inputType)) {
+        const uniqueTags = getAllUniqueTags();
+        if (uniqueTags.includes(val)) {
+          addFn(val);
+        }
+      }
+    });
+  };
+
+  handleAutocompleteSelect($('tagInput'), addTag);
+
   // ── Save ──
   $('saveBtn').addEventListener('click', saveImage);
 
@@ -796,6 +814,8 @@ function setupEventListeners() {
       addEditTag($('editTagInput').value);
     }
   });
+
+  handleAutocompleteSelect($('editTagInput'), addEditTag);
 
   // ── Browser History popstate (實作瀏覽器/手機返回鍵關閉視窗) ──
   window.addEventListener('popstate', (e) => {
