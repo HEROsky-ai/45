@@ -149,105 +149,7 @@ async function deleteImageById(id, imageUrl) {
   }
 }
 
-// ─── OCR (Tesseract.js) + 簡繁轉換 (OpenCC) ────────────────
-let s2twConverter = null; // 懶初始化，第一次用時建立
 
-function getConverter() {
-  if (!s2twConverter) {
-    // OpenCC.js: 簡體 → 繁體（台灣標準）
-    s2twConverter = OpenCC.Converter({ from: 'cn', to: 'twp' });
-  }
-  return s2twConverter;
-}
-
-function toTraditional(text) {
-  try {
-    return getConverter()(text);
-  } catch (e) {
-    console.warn('OpenCC convert failed:', e);
-    return text; // 轉換失敗就回傳原文
-  }
-}
-
-async function runOCR(file) {
-  $('ocrProgress').style.display = 'block';
-  $('progressBar').style.width = '0%';
-  $('ocrProgressText').textContent = '正在辨識圖片文字…';
-
-  try {
-    const result = await Tesseract.recognize(file, 'chi_tra+chi_sim+eng', {
-      logger: m => {
-        if (m.status === 'recognizing text') {
-          const pct = Math.round(m.progress * 100);
-          $('progressBar').style.width = pct + '%';
-          $('ocrProgressText').textContent = `辨識中… ${pct}%`;
-        } else if (m.status === 'loading language traineddata') {
-          $('ocrProgressText').textContent = '正在下載中文語言包（首次約需1分鐘）…';
-        } else if (m.status === 'initializing api') {
-          $('ocrProgressText').textContent = '初始化 OCR 引擎…';
-        }
-      }
-    });
-
-    $('ocrProgress').style.display = 'none';
-
-    const rawText = result.data.text.trim();
-
-    // 自動轉換為繁體中文
-    $('ocrProgressText').textContent = '轉換為繁體中文…';
-    const traditionalText = toTraditional(rawText);
-
-    return traditionalText;
-
-  } catch (err) {
-    $('ocrProgress').style.display = 'none';
-    console.error('OCR error:', err);
-    showToast('⚠️ OCR 辨識失敗，可手動輸入標籤', 'error');
-    return '';
-  }
-}
-
-// ─── Tag extraction from OCR text ───────────────────────────
-const STOP_WORDS = new Set([
-  '的','了','是','在','和','有','不','就','都','也','這','那',
-  '而','以','但','或','因','如','對','其','已','可','為','從',
-  '由','及','各','與','被','向','把','讓','沒','很','比','更',
-  '最','還','只','要','此','些','將','並','當','所','我','你',
-  '他','她','它','們','一','二','三','四','五','六','七','八',
-  '九','十','上','下','左','右','前','後','中','大','小','年',
-  '月','日','時','分','mm','cm','ng','ml','中文','英文','版本',
-  'The','the','and','or','is','in','of','to','a','an',
-]);
-
-function extractTagsFromText(text) {
-  if (!text) return [];
-
-  // Split on whitespace, Chinese punctuation, common delimiters
-  const tokens = text
-    .replace(/[，。！？、；：「」『』【】（）〔〕…—～·＊•\n\r\t\/\-:;,.\(\)]/g, ' ')
-    .split(/\s+/)
-    .map(t => t.trim())
-    .filter(t => {
-      if (!t || t.length < 2) return false;
-      if (/^\d+$/.test(t)) return false;       // pure numbers
-      if (t.length > 12) return false;          // too long
-      if (STOP_WORDS.has(t)) return false;
-      return true;
-    });
-
-  // Deduplicate, preserve order
-  const seen = new Set();
-  const result = [];
-  for (const t of tokens) {
-    const lower = t.toLowerCase();
-    if (!seen.has(lower)) {
-      seen.add(lower);
-      result.push(t);
-    }
-  }
-
-  return result.slice(0, 25); // max 25 suggested tags
-}
 
 // ─── Render ──────────────────────────────────────────────────
 function renderGallery(images, query = '') {
@@ -545,8 +447,6 @@ function resetUploadModal() {
   $('dropZone').style.display = 'block';
   $('previewSection').style.display = 'none';
   $('uploadFooter').style.display = 'none';
-  $('ocrProgress').style.display = 'none';
-  $('ocrResultSection').style.display = 'none';
   $('tagsContainer').innerHTML = '';
   $('titleInput').value = '';
   $('tagInput').value = '';
@@ -555,7 +455,6 @@ function resetUploadModal() {
   $('saveBtnText').textContent = '儲存圖片';
   $('saveSpinner').style.display = 'none';
   $('previewImg').src = '';
-  $('progressBar').style.width = '0%';
 }
 
 async function handleFileSelected(file) {
