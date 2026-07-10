@@ -282,13 +282,13 @@ function openLightbox(img, pushState = true) {
 }
 
 function closeLightbox(popState = true) {
-  $('lightbox').style.display = 'none';
-  document.body.style.overflow = '';
-  lightboxImage = null;
-  currentEditTags = [];
-
   if (popState && window.history.state && window.history.state.modal === 'lightbox') {
     window.history.back();
+  } else {
+    $('lightbox').style.display = 'none';
+    document.body.style.overflow = '';
+    lightboxImage = null;
+    currentEditTags = [];
   }
 }
 
@@ -304,11 +304,11 @@ function openZoom(pushState = true) {
 }
 
 function closeZoom(popState = true) {
-  $('zoomModal').style.display = 'none';
-  $('zoomedImg').src = '';
-
   if (popState && window.history.state && window.history.state.modal === 'zoom') {
     window.history.back();
+  } else {
+    $('zoomModal').style.display = 'none';
+    $('zoomedImg').src = '';
   }
 }
 
@@ -430,13 +430,13 @@ function openUploadModal(pushState = true) {
 }
 
 function closeUploadModal(popState = true) {
-  $('uploadModal').style.display = 'none';
-  document.body.style.overflow = '';
-  selectedFile = null;
-  currentTags = [];
-
   if (popState && window.history.state && window.history.state.modal === 'upload') {
     window.history.back();
+  } else {
+    $('uploadModal').style.display = 'none';
+    document.body.style.overflow = '';
+    selectedFile = null;
+    currentTags = [];
   }
 }
 
@@ -776,13 +776,39 @@ function setupEventListeners() {
 
   // ── Browser History popstate (實作瀏覽器/手機返回鍵關閉視窗) ──
   window.addEventListener('popstate', (e) => {
-    if ($('zoomModal').style.display !== 'none') {
-      closeZoom(false);
-    } else if ($('lightbox').style.display !== 'none') {
-      closeLightbox(false);
+    const state = e.state || {};
+    
+    // 1. 處理放大模式 (Zoom Modal)
+    if (state.modal === 'zoom') {
+      $('zoomModal').style.display = 'flex';
+    } else {
+      $('zoomModal').style.display = 'none';
+      $('zoomedImg').src = '';
     }
-    if ($('uploadModal').style.display !== 'none') {
-      closeUploadModal(false);
+
+    // 2. 處理詳情模式 (Lightbox Modal)
+    if (state.modal === 'lightbox') {
+      $('lightbox').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    } else {
+      $('lightbox').style.display = 'none';
+      lightboxImage = null;
+      currentEditTags = [];
+    }
+
+    // 3. 處理上傳模式 (Upload Modal)
+    if (state.modal === 'upload') {
+      $('uploadModal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    } else {
+      $('uploadModal').style.display = 'none';
+      selectedFile = null;
+      currentTags = [];
+    }
+
+    // 如果沒有任何開著的 Modal，就還原 body 滾輪
+    if (!state.modal) {
+      document.body.style.overflow = '';
     }
   });
 
