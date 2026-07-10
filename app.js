@@ -272,7 +272,6 @@ function openLightbox(img, pushState = true) {
   ).join('') || '<span style="color:var(--text-3);font-size:13px">尚無症狀標籤</span>';
 
   $('lightboxNotes').textContent = img.notes || '（無備註說明）';
-  $('lightboxOcrText').textContent = img.ocr_text || '（無 OCR 辨識內容）';
 
   $('lightbox').style.display = 'flex';
   document.body.style.overflow = 'hidden';
