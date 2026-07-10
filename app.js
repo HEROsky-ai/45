@@ -579,17 +579,9 @@ async function handleFileSelected(file) {
   const nameWithoutExt = file.name.replace(/\.[^.]+$/, '');
   $('titleInput').value = nameWithoutExt;
 
-  // Run OCR
-  const ocrText = await runOCR(file);
-
-  if (ocrText) {
-    $('ocrTextBox').textContent = ocrText;
-    $('ocrResultSection').style.display = 'block';
-
-    const extracted = extractTagsFromText(ocrText);
-    currentTags = [...extracted];
-    renderEditableTags();
-  }
+  // 初始化空白標籤列表以供手動新增
+  currentTags = [];
+  renderEditableTags();
 
   $('saveBtn').disabled = false;
 }
@@ -630,7 +622,7 @@ async function saveImage() {
   if (!selectedFile) return;
 
   const title = $('titleInput').value.trim() || '未命名';
-  const ocrText = $('ocrTextBox').textContent || '';
+  const ocrText = ''; // 移除 OCR 功能，直接帶入空值
   const notes = $('notesInput').value.trim() || '';
 
   $('saveBtn').disabled = true;
@@ -857,13 +849,6 @@ function setupEventListeners() {
 
   // ── Save ──
   $('saveBtn').addEventListener('click', saveImage);
-
-  // ── OCR toggle ──
-  $('toggleOcrText').addEventListener('click', () => {
-    ocrCollapsed = !ocrCollapsed;
-    $('ocrTextBox').classList.toggle('collapsed', ocrCollapsed);
-    $('toggleOcrText').textContent = ocrCollapsed ? '▶' : '▼';
-  });
 
   // ── Lightbox ──
   $('lightboxBg').addEventListener('click', () => closeLightbox());
