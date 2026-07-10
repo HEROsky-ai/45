@@ -388,6 +388,26 @@ function closeLightbox(popState = true) {
   }
 }
 
+// ─── Image Fullscreen Zoom ──────────────────────────────────
+function openZoom(pushState = true) {
+  if (!lightboxImage) return;
+  $('zoomedImg').src = lightboxImage.image_url;
+  $('zoomModal').style.display = 'flex';
+
+  if (pushState) {
+    window.history.pushState({ modal: 'zoom' }, '');
+  }
+}
+
+function closeZoom(popState = true) {
+  $('zoomModal').style.display = 'none';
+  $('zoomedImg').src = '';
+
+  if (popState && window.history.state && window.history.state.modal === 'zoom') {
+    window.history.back();
+  }
+}
+
 function openEditMode() {
   if (!lightboxImage) return;
 
@@ -840,6 +860,14 @@ function setupEventListeners() {
   $('lightboxClose').addEventListener('click', () => closeLightbox());
   $('deleteBtn').addEventListener('click', deleteCurrentImage);
   $('lightboxBackBtn').addEventListener('click', () => closeLightbox());
+  $('lightboxImg').addEventListener('click', () => openZoom());
+
+  // ── Image Zoom Modal ──
+  $('zoomContent').addEventListener('click', () => closeZoom());
+  $('zoomClose').addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeZoom();
+  });
 
   // ── Lightbox Edit Mode ──
   $('editBtn').addEventListener('click', openEditMode);
@@ -855,7 +883,9 @@ function setupEventListeners() {
 
   // ── Browser History popstate (實作瀏覽器/手機返回鍵關閉視窗) ──
   window.addEventListener('popstate', (e) => {
-    if ($('lightbox').style.display !== 'none') {
+    if ($('zoomModal').style.display !== 'none') {
+      closeZoom(false);
+    } else if ($('lightbox').style.display !== 'none') {
       closeLightbox(false);
     }
     if ($('uploadModal').style.display !== 'none') {
@@ -865,7 +895,9 @@ function setupEventListeners() {
 
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      if ($('lightbox').style.display !== 'none') {
+      if ($('zoomModal').style.display !== 'none') {
+        closeZoom();
+      } else if ($('lightbox').style.display !== 'none') {
         // 如果在編輯模式下按 ESC，先退回唯讀檢視模式；若在檢視模式下則關閉 lightbox
         if ($('lightboxEditMode').style.display !== 'none') {
           closeEditMode();

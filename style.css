@@ -1003,6 +1003,12 @@ input[type="password"]::placeholder { color: var(--text-3); }
   max-height: calc(100vh - 160px);
   object-fit: contain;
   border-radius: var(--radius-md);
+  cursor: zoom-in;
+  transition: transform var(--transition);
+}
+
+.lightbox-img:hover {
+  transform: scale(1.015);
 }
 
 .lightbox-info {

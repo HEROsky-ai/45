@@ -229,9 +229,17 @@
     </div>
   </div>
 
+  <!-- ===== FULLSCREEN ZOOM MODAL ===== -->
+  <div id="zoomModal" class="overlay" style="display:none; z-index: 400; background: rgba(0,0,0,0.95); padding: 0;" role="dialog" aria-modal="true" aria-label="圖片放大">
+    <div id="zoomContent" style="position: relative; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; cursor: zoom-out;">
+      <img id="zoomedImg" src="" alt="放大圖片" style="max-width: 100%; max-height: 100%; object-fit: contain; user-select: none;">
+      <button class="lightbox-close" id="zoomClose" aria-label="關閉" style="position: fixed; top: 24px; right: 24px; z-index: 410;">✕</button>
+    </div>
+  </div>
+
   <!-- ===== TOAST ===== -->
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script src="app.js?v=5"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>
